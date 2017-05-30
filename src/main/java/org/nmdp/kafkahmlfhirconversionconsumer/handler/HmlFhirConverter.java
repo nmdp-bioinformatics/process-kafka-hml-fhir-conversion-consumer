@@ -34,13 +34,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import org.nmdp.hmlfhirconvertermodels.dto.Hml;
 import org.nmdp.servicekafkaproducermodel.models.KafkaMessage;
 import org.nmdp.servicekafkaproducermodel.models.KafkaMessagePayload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.nmdp.kafkaconsumer.handler.KafkaMessageHandler;
 
@@ -48,11 +49,9 @@ import org.nmdp.kafkaconsumer.handler.KafkaMessageHandler;
 public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(HmlFhirConverter.class);
-    public static final String NO_REPLICATE_ATTR = "noreplicate";
     private final ConcurrentMap<String, LinkedBlockingQueue<WorkItem>> workQueueMap = new ConcurrentHashMap<>();
-
     private static final ThreadLocal<DecimalFormat> DF = ThreadLocal.withInitial(() -> new DecimalFormat("####################"));
-    private static final ThreadLocal<ObjectMapper> OBJECT_MAPPER = ThreadLocal.withInitial(ObjectMapper::new);
+    private static final ThreadLocal<GsonBuilder> GSON_BUILDER_THREAD_LOCAL = ThreadLocal.withInitial(GsonBuilder::new);
 
     public HmlFhirConverter() throws IOException {
 
@@ -73,18 +72,24 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
         KafkaMessage message;
 
         try {
-            message = OBJECT_MAPPER.get().reader(KafkaMessage.class).readValue(payload);
-        } catch (IOException e) {
+            String json = new String(payload);
+            Gson gson = GSON_BUILDER_THREAD_LOCAL.get().create();
+            JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+            JsonObject jsonPayload = jsonObject.getAsJsonObject("payload");
+            JsonObject jsonModel = jsonPayload.getAsJsonObject("model");
+
+            message = gson.fromJson(json, KafkaMessage.class);
+        } catch (Exception e) {
             LOG.error("Error parsing message " + topic + "-" + DF.get().format(partition) + ":" + DF.get().format(offset), e);
             return;
         }
 
-        try {
-            KafkaMessagePayload messagePayload = message.getPayload();
-            queue.put(new WorkItem((Hml) messagePayload.getModel(), messagePayload.getModelId()));
-        } catch (InterruptedException ex) {
-            LOG.error("Error committing to queue, interrupted: ", ex);
-        }
+//        try {
+//            KafkaMessagePayload messagePayload = message.getPayload();
+//            queue.put(new WorkItem((Hml) messagePayload.getModel(), messagePayload.getModelId()));
+//        } catch (InterruptedException ex) {
+//            LOG.error("Error committing to queue, interrupted: ", ex);
+//        }
     }
 
     public void commit(String topic, int partition, long offset) throws Exception {
