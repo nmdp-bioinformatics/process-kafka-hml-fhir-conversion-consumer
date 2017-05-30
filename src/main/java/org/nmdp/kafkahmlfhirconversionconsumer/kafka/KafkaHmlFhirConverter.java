@@ -103,7 +103,6 @@ public class KafkaHmlFhirConverter {
         closeables.add(slf4jReporter);
 
         try {
-            // create and initialize routes
             Map<String, List<KafkaMessageConsumer>> connectors = config.initConnectors(closeables, metrics);
             LOG.info("Connectors: {}", connectors.values().stream()
                     .flatMap(List::stream)

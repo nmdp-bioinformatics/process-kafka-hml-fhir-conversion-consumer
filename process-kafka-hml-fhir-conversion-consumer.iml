@@ -22,7 +22,7 @@
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.2.3" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.2.3" level="project" />
     <orderEntry type="library" name="Maven: org.yaml:snakeyaml:1.16" level="project" />
-    <orderEntry type="library" name="Maven: org.nmdp:kafka-consumer:1.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.nmdp:kafka-consumer:1.2.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.inject:guice:4.0" level="project" />
     <orderEntry type="library" name="Maven: javax.inject:javax.inject:1" level="project" />
     <orderEntry type="library" name="Maven: aopalliance:aopalliance:1.0" level="project" />

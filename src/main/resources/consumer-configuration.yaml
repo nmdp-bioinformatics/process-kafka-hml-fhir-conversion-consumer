@@ -19,7 +19,7 @@ kafkaBrokers:
 connectors:
   - id: dev_andrew_conversion
     sourceBroker: sandbox
-    sourceTopic: hml_fhir_conversion
+    sourceTopic: hml-fhir-conversion
     targetCluster: "sandbox/analytics"
     targetTable: "%SOURCE%"
     threads: 1

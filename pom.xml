@@ -19,7 +19,7 @@
         <java.version>1.8</java.version>
         <snake-yaml-version>1.16</snake-yaml-version>
         <jackson-xml-version>2.2.3</jackson-xml-version>
-        <nmdp-consumer-version>1.1.0</nmdp-consumer-version>
+        <nmdp-consumer-version>1.2.0</nmdp-consumer-version>
         <nmdp-models-version>1.6.0</nmdp-models-version>
         <nmdp-models-api-version>1.2.0</nmdp-models-api-version>
         <google-guice-version>4.0</google-guice-version>
