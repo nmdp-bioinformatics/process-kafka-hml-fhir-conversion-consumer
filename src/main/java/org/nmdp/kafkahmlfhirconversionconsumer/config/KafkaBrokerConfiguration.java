@@ -80,7 +80,7 @@ public class KafkaBrokerConfiguration {
             config.putAll(consumerConfig);
         }
 
-        Properties props = buildConsumerProperties(sourceTopic, consumerGroupPrefix, config);
+        Properties props = buildConsumerProperties(config);
         KafkaConsumerProperties properties = KafkaConsumerProperties.builder()
                 .configure(props, null)
                 .consumerGroup(consumerGroupPrefix + routeId)
@@ -94,7 +94,7 @@ public class KafkaBrokerConfiguration {
         return consumer;
     }
 
-    private Properties buildConsumerProperties(String sourceTopic, String consumerGroupPrefix, Map<String, String> config) {
+    private Properties buildConsumerProperties(Map<String, String> config) {
         Properties props = new Properties();
         for (Map.Entry<String, String> entry : config.entrySet()) {
             String key = entry.getKey();
