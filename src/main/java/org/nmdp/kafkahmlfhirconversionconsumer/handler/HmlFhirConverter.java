@@ -34,11 +34,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.nmdp.hmlfhirconvertermodels.dto.Hml;
 import org.nmdp.servicekafkaproducermodel.models.KafkaMessage;
 import org.nmdp.servicekafkaproducermodel.models.KafkaMessagePayload;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +52,7 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(HmlFhirConverter.class);
     private final ConcurrentMap<String, LinkedBlockingQueue<WorkItem>> workQueueMap = new ConcurrentHashMap<>();
     private static final ThreadLocal<DecimalFormat> DF = ThreadLocal.withInitial(() -> new DecimalFormat("####################"));
-    private static final ThreadLocal<ObjectMapper> OBJECT_MAPPER = ThreadLocal.withInitial(ObjectMapper::new);
+    private static final ThreadLocal<GsonBuilder> OBJECT_MAPPER = ThreadLocal.withInitial(GsonBuilder::new);
 
     public HmlFhirConverter() throws IOException {
 
@@ -71,7 +73,9 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
         KafkaMessage message;
 
         try {
-            message = OBJECT_MAPPER.get().reader(KafkaMessage.class).readValue(payload);
+            Gson gson = OBJECT_MAPPER.get().create();
+            String json = new String(payload);
+            message = gson.fromJson(json, KafkaMessage.class);
         } catch (Exception e) {
             LOG.error("Error parsing message " + topic + "-" + DF.get().format(partition) + ":" + DF.get().format(offset), e);
             return;

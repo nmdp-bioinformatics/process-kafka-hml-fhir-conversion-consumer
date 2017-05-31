@@ -14,22 +14,27 @@
     <properties>
         <apache-kafka-version>0.10.2.1</apache-kafka-version>
         <slf4j-version>1.7.6</slf4j-version>
-        <log4j-version>1.2.17</log4j-version>
+        <log4j-version>2.8.2</log4j-version>
         <metrics-version>3.1.2</metrics-version>
         <java.version>1.8</java.version>
         <snake-yaml-version>1.16</snake-yaml-version>
         <jackson-xml-version>2.2.3</jackson-xml-version>
         <nmdp-consumer-version>1.2.0</nmdp-consumer-version>
-        <nmdp-models-version>1.8.1</nmdp-models-version>
+        <nmdp-models-version>1.8.2</nmdp-models-version>
         <nmdp-models-api-version>1.2.0</nmdp-models-api-version>
         <google-guice-version>4.0</google-guice-version>
         <gson-version>2.8.0</gson-version>
+        <maven-compiler-plugin-version>3.5.1</maven-compiler-plugin-version>
+        <commons-logging-api-version>1.1</commons-logging-api-version>
+        <guava-version>12.0.1</guava-version>
     </properties>
 
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin-version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -66,8 +71,8 @@
             <version>${apache-kafka-version}</version>
           </dependency>
           <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
             <version>${log4j-version}</version>
             <scope>provided</scope>
           </dependency>
@@ -102,6 +107,11 @@
             <artifactId>guice</artifactId>
             <version>${google-guice-version}</version>
           </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava-version}</version>
+            </dependency>
           <dependency>
             <groupId>org.nmdp</groupId>
             <artifactId>service-kafka-producer-model</artifactId>
@@ -117,6 +127,11 @@
             <artifactId>gson</artifactId>
             <version>${gson-version}</version>
           </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging-api</artifactId>
+                <version>${commons-logging-api-version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     
@@ -138,8 +153,8 @@
             <artifactId>metrics-healthchecks</artifactId>
         </dependency>
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
