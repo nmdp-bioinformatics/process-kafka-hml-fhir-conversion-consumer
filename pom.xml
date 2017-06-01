@@ -27,6 +27,9 @@
         <maven-compiler-plugin-version>3.5.1</maven-compiler-plugin-version>
         <commons-logging-api-version>1.1</commons-logging-api-version>
         <guava-version>12.0.1</guava-version>
+        <nmdp-conversion-version>1.2.17</nmdp-conversion-version>
+        <model-mapper-version>0.7.5</model-mapper-version>
+        <joda-time-version>2.9.9</joda-time-version>
     </properties>
 
     <build>
@@ -74,13 +77,11 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>${log4j-version}</version>
-            <scope>provided</scope>
           </dependency>
           <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4j-version}</version>
-            <scope>provided</scope>
           </dependency>
           <dependency>
             <groupId>org.slf4j</groupId>
@@ -107,11 +108,11 @@
             <artifactId>guice</artifactId>
             <version>${google-guice-version}</version>
           </dependency>
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>${guava-version}</version>
-            </dependency>
+          <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava-version}</version>
+          </dependency>
           <dependency>
             <groupId>org.nmdp</groupId>
             <artifactId>service-kafka-producer-model</artifactId>
@@ -127,11 +128,26 @@
             <artifactId>gson</artifactId>
             <version>${gson-version}</version>
           </dependency>
-            <dependency>
-                <groupId>commons-logging</groupId>
-                <artifactId>commons-logging-api</artifactId>
-                <version>${commons-logging-api-version}</version>
-            </dependency>
+          <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging-api</artifactId>
+            <version>${commons-logging-api-version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.nmdp</groupId>
+            <artifactId>hml-fhir</artifactId>
+            <version>${nmdp-conversion-version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>${model-mapper-version}</version>
+          </dependency>
+          <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>${joda-time-version}</version>
+          </dependency>
         </dependencies>
     </dependencyManagement>
     
@@ -195,6 +211,18 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.nmdp</groupId>
+            <artifactId>hml-fhir</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
         </dependency>
     </dependencies>
 

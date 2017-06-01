@@ -37,9 +37,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import org.nmdp.hmlfhir.ConvertHmlToFhir;
+import org.nmdp.hmlfhir.ConvertHmlToFhirImpl;
+import org.nmdp.hmlfhir.deserialization.Deserializer;
+import org.nmdp.hmlfhir.deserialization.HmlDeserializer;
+import org.nmdp.hmlfhirconvertermodels.domain.fhir.FhirMessage;
 import org.nmdp.hmlfhirconvertermodels.dto.Hml;
-import org.nmdp.servicekafkaproducermodel.models.KafkaMessage;
-import org.nmdp.servicekafkaproducermodel.models.KafkaMessagePayload;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +55,16 @@ import org.nmdp.kafkaconsumer.handler.KafkaMessageHandler;
 public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(HmlFhirConverter.class);
-    private final ConcurrentMap<String, LinkedBlockingQueue<WorkItem>> workQueueMap = new ConcurrentHashMap<>();
     private static final ThreadLocal<DecimalFormat> DF = ThreadLocal.withInitial(() -> new DecimalFormat("####################"));
     private static final ThreadLocal<GsonBuilder> OBJECT_MAPPER = ThreadLocal.withInitial(GsonBuilder::new);
 
-    public HmlFhirConverter() throws IOException {
+    private final ConvertHmlToFhir CONVERTER;
+    private final ConcurrentMap<String, LinkedBlockingQueue<WorkItem>> workQueueMap;
 
+    public HmlFhirConverter() throws IOException {
+        Deserializer deserializer = new HmlDeserializer();
+        CONVERTER = new ConvertHmlToFhirImpl(deserializer);
+        workQueueMap = new ConcurrentHashMap<>();
     }
 
     private String getSenderKey(String topic, int partition) {
@@ -70,22 +79,30 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
     public void process(String topic, int partition, long offset, byte[] key, byte[] payload) throws Exception {
         String senderKey = getSenderKey(topic, partition);
         LinkedBlockingQueue<WorkItem> queue = getWorkQueue(senderKey);
-        KafkaMessage message;
 
         try {
             Gson gson = OBJECT_MAPPER.get().create();
-            String json = new String(payload);
-            message = gson.fromJson(json, KafkaMessage.class);
+            String kafkaMessage = new String(payload);
+            JsonObject kafkaJson = gson.fromJson(kafkaMessage, JsonObject.class);
+            JsonObject kafkaPayloadJson = kafkaJson.getAsJsonObject("payload");
+            Hml hml = null;
+
+            if (kafkaPayloadJson.has("model")) {
+                JsonObject hmlJson = new JsonObject();
+                hmlJson.add("hml", kafkaPayloadJson.getAsJsonObject("model"));
+                hml = CONVERTER.convertToDto(hmlJson);
+            } else {
+                hml = getHmlFromMongo(kafkaPayloadJson.get("modelId").toString());
+            }
+
+            if (hml == null && !kafkaPayloadJson.has("modelId")) {
+                throw new Exception("No message to convert");
+            }
+
+            FhirMessage fhir = CONVERTER.convert(hml);
         } catch (Exception e) {
             LOG.error("Error parsing message " + topic + "-" + DF.get().format(partition) + ":" + DF.get().format(offset), e);
             return;
-        }
-
-        try {
-            KafkaMessagePayload messagePayload = message.getPayload();
-            queue.put(new WorkItem((Hml) messagePayload.getModel(), messagePayload.getModelId()));
-        } catch (InterruptedException ex) {
-            LOG.error("Error committing to queue, interrupted: ", ex);
         }
     }
 
