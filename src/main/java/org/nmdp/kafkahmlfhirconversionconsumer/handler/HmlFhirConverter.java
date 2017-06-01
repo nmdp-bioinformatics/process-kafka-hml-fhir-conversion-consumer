@@ -25,9 +25,12 @@ package org.nmdp.kafkahmlfhirconversionconsumer.handler;
  */
 
 import javax.inject.Singleton;
+import javax.swing.text.Document;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,9 +48,13 @@ import org.nmdp.hmlfhir.deserialization.HmlDeserializer;
 import org.nmdp.hmlfhirconvertermodels.domain.fhir.FhirMessage;
 import org.nmdp.hmlfhirconvertermodels.dto.Hml;
 import org.nmdp.kafkaconsumer.handler.KafkaMessageHandler;
+import org.nmdp.kafkahmlfhirconversionconsumer.config.MongoConfiguration;
+import org.nmdp.kafkahmlfhirconversionconsumer.mongo.MongoFhirDatabase;
+import org.nmdp.kafkahmlfhirconversionconsumer.mongo.MongoHmlDatabase;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.Yaml;
 
 @Singleton
 public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
@@ -55,6 +62,8 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(HmlFhirConverter.class);
     private static final ThreadLocal<DecimalFormat> DF = ThreadLocal.withInitial(() -> new DecimalFormat("####################"));
     private static final ThreadLocal<GsonBuilder> OBJECT_MAPPER = ThreadLocal.withInitial(GsonBuilder::new);
+    private static final Yaml yaml = new Yaml();
+    private final MongoConfiguration mongoConfiguration;
 
     private final ConvertHmlToFhir CONVERTER;
     private final ConcurrentMap<String, LinkedBlockingQueue<WorkItem>> workQueueMap;
@@ -63,6 +72,11 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
         Deserializer deserializer = new HmlDeserializer();
         CONVERTER = new ConvertHmlToFhirImpl(deserializer);
         workQueueMap = new ConcurrentHashMap<>();
+        URL url = new URL("file:." + "/src/main/resources/mongo-configuration.yaml");
+
+        try (InputStream is = url.openStream()) {
+            mongoConfiguration = yaml.loadAs(is, MongoConfiguration.class);
+        }
     }
 
     private String getSenderKey(String topic, int partition) {
@@ -129,16 +143,32 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
                 throw new Exception("No message to convert");
             }
 
-            FhirMessage fhir = CONVERTER.convert(hml);
+            writeFhirToMongo(CONVERTER.convert(hml));
         } catch (Exception ex) {
             LOG.error("Error converting HML to FHIR.", ex);
         }
     }
 
-    private Hml getHmlFromMongo(String hmlId) {
-        return new org.nmdp.hmlfhirconvertermodels.domain.Hml().toDto(new org.nmdp.hmlfhirconvertermodels.domain.Hml());
+    private Hml getHmlFromMongo(String hmlId) throws Exception {
+        try {
+            MongoHmlDatabase mongo = new MongoHmlDatabase(mongoConfiguration);
+            org.bson.Document document = mongo.get(hmlId);
+            String json = document.toJson();
+            return CONVERTER.convertToDto(json, null);
+        } catch (Exception ex) {
+            LOG.error("Error retrieving record from mongo", ex);
+            throw ex;
+        }
+    }
 
-        // TODO: implement call to database
+    private void writeFhirToMongo(FhirMessage fhir) throws Exception {
+        try {
+            MongoFhirDatabase mongo = new MongoFhirDatabase(mongoConfiguration);
+            mongo.save(fhir);
+        } catch (Exception ex) {
+            LOG.error("Error writing record to mongo.", ex);
+            throw ex;
+        }
     }
 
     @Override

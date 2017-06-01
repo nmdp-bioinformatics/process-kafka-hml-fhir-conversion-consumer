@@ -27,6 +27,7 @@ package org.nmdp.kafkahmlfhirconversionconsumer.kafka;
 import org.apache.log4j.PropertyConfigurator;
 
 import org.nmdp.kafkaconsumer.metrics.KafkaConsumerAggregate;
+import org.nmdp.kafkahmlfhirconversionconsumer.config.MongoConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +76,7 @@ public class KafkaHmlFhirConverter {
     public KafkaHmlFhirConverter(URL configUrl) throws Exception {
         Yaml yaml = new Yaml();
         RootConfiguration config;
+
         try (InputStream is = configUrl.openStream()) {
             config = yaml.loadAs(is, RootConfiguration.class);
         }

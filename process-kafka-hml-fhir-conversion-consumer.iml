@@ -37,5 +37,8 @@
     <orderEntry type="library" name="Maven: org.nmdp:hml-fhir:1.2.20" level="project" />
     <orderEntry type="library" name="Maven: org.modelmapper:modelmapper:0.7.5" level="project" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.9" level="project" />
+    <orderEntry type="library" name="Maven: org.mongodb:mongodb-driver:3.4.0-beta1" level="project" />
+    <orderEntry type="library" name="Maven: org.mongodb:bson:3.4.0-beta1" level="project" />
+    <orderEntry type="library" name="Maven: org.mongodb:mongodb-driver-core:3.4.0-beta1" level="project" />
   </component>
 </module>
