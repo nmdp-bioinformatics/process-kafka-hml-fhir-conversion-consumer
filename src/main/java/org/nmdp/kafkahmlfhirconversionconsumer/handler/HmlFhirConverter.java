@@ -100,6 +100,7 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
             }
 
             FhirMessage fhir = CONVERTER.convert(hml);
+            String test = "1";
         } catch (Exception e) {
             LOG.error("Error parsing message " + topic + "-" + DF.get().format(partition) + ":" + DF.get().format(offset), e);
             return;
