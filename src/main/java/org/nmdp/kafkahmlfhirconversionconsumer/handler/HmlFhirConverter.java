@@ -36,20 +36,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
 import org.nmdp.hmlfhir.ConvertHmlToFhir;
 import org.nmdp.hmlfhir.ConvertHmlToFhirImpl;
 import org.nmdp.hmlfhir.deserialization.Deserializer;
 import org.nmdp.hmlfhir.deserialization.HmlDeserializer;
 import org.nmdp.hmlfhirconvertermodels.domain.fhir.FhirMessage;
 import org.nmdp.hmlfhirconvertermodels.dto.Hml;
+import org.nmdp.kafkaconsumer.handler.KafkaMessageHandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.nmdp.kafkaconsumer.handler.KafkaMessageHandler;
 
 @Singleton
 public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
@@ -81,26 +79,7 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
         LinkedBlockingQueue<WorkItem> queue = getWorkQueue(senderKey);
 
         try {
-            Gson gson = OBJECT_MAPPER.get().create();
-            String kafkaMessage = new String(payload);
-            JsonObject kafkaJson = gson.fromJson(kafkaMessage, JsonObject.class);
-            JsonObject kafkaPayloadJson = kafkaJson.getAsJsonObject("payload");
-            Hml hml = null;
-
-            if (kafkaPayloadJson.has("model")) {
-                JsonObject hmlJson = new JsonObject();
-                hmlJson.add("hml", kafkaPayloadJson.getAsJsonObject("model"));
-                hml = CONVERTER.convertToDto(hmlJson);
-            } else {
-                hml = getHmlFromMongo(kafkaPayloadJson.get("modelId").toString());
-            }
-
-            if (hml == null && !kafkaPayloadJson.has("modelId")) {
-                throw new Exception("No message to convert");
-            }
-
-            FhirMessage fhir = CONVERTER.convert(hml);
-            String test = "1";
+            queue.add(new WorkItem(payload));
         } catch (Exception e) {
             LOG.error("Error parsing message " + topic + "-" + DF.get().format(partition) + ":" + DF.get().format(offset), e);
             return;
@@ -131,13 +110,29 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
     }
 
     private void convertHmlToFhir(WorkItem item) {
-        Hml hml = item.getHml();
+        try {
+            Gson gson = OBJECT_MAPPER.get().create();
+            String kafkaMessage = new String(item.getPayload());
+            JsonObject kafkaJson = gson.fromJson(kafkaMessage, JsonObject.class);
+            JsonObject kafkaPayloadJson = kafkaJson.getAsJsonObject("payload");
+            Hml hml = null;
 
-        if (hml == null) {
-            hml = getHmlFromMongo(item.getHmlId());
+            if (kafkaPayloadJson.has("model")) {
+                JsonObject hmlJson = new JsonObject();
+                hmlJson.add("hml", kafkaPayloadJson.getAsJsonObject("model"));
+                hml = CONVERTER.convertToDto(hmlJson);}
+            else {
+                hml = getHmlFromMongo(kafkaPayloadJson.get("modelId").toString());
+            }
+
+            if (hml == null && !kafkaPayloadJson.has("modelId")) {
+                throw new Exception("No message to convert");
+            }
+
+            FhirMessage fhir = CONVERTER.convert(hml);
+        } catch (Exception ex) {
+            LOG.error("Error converting HML to FHIR.", ex);
         }
-
-        // TODO: finish call to convert
     }
 
     private Hml getHmlFromMongo(String hmlId) {
@@ -166,20 +161,14 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
     }
 
     private static class WorkItem {
-        private final Hml hml;
-        private final String hmlId;
+        private final byte[] payload;
 
-        public WorkItem(Hml hml, String hmlId) {
-            this.hml = hml;
-            this.hmlId = hmlId;
+        public WorkItem(byte[] payload) {
+            this.payload = payload;
         }
 
-        public Hml getHml() {
-            return hml;
-        }
-
-        public String getHmlId() {
-            return hmlId;
+        public byte[] getPayload() {
+            return payload;
         }
     }
 }
