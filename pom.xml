@@ -32,6 +32,7 @@
         <joda-time-version>2.9.9</joda-time-version>
         <mongodb-driver-version>3.4.0-beta1</mongodb-driver-version>
         <json-version>20160212</json-version>
+        <nmdp-mongo-version>1.0.1</nmdp-mongo-version>
     </properties>
 
     <build>
@@ -160,6 +161,11 @@
                 <artifactId>json</artifactId>
                 <version>${json-version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.nmdp</groupId>
+                <artifactId>hml-fhir-mongo</artifactId>
+                <version>${nmdp-mongo-version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     
@@ -243,6 +249,10 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.nmdp</groupId>
+            <artifactId>hml-fhir-mongo</artifactId>
         </dependency>
     </dependencies>
 

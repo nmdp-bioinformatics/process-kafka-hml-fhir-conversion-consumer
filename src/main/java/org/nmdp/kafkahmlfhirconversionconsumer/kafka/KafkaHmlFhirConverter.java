@@ -27,7 +27,6 @@ package org.nmdp.kafkahmlfhirconversionconsumer.kafka;
 import org.apache.log4j.PropertyConfigurator;
 
 import org.nmdp.kafkaconsumer.metrics.KafkaConsumerAggregate;
-import org.nmdp.kafkahmlfhirconversionconsumer.config.MongoConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +54,6 @@ import org.nmdp.kafkaconsumer.consumer.KafkaMessageConsumer;
 import org.nmdp.kafkaconsumer.health.HealthReporter;
 import org.nmdp.kafkaconsumer.health.KafkaConsumerHealthRegistry;
 import org.nmdp.kafkahmlfhirconversionconsumer.object.RouterObjectNameFactory;
-import org.nmdp.kafkahmlfhirconversionconsumer.config.ConnectorConfiguration;
 import org.nmdp.kafkahmlfhirconversionconsumer.config.RootConfiguration;
 
 public class KafkaHmlFhirConverter {
