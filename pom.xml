@@ -32,7 +32,7 @@
         <joda-time-version>2.9.9</joda-time-version>
         <mongodb-driver-version>3.4.0-beta1</mongodb-driver-version>
         <json-version>20160212</json-version>
-        <nmdp-mongo-version>1.0.7</nmdp-mongo-version>
+        <nmdp-mongo-version>1.0.15</nmdp-mongo-version>
     </properties>
 
     <build>

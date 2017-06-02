@@ -41,6 +41,6 @@
     <orderEntry type="library" name="Maven: org.mongodb:bson:3.4.0-beta1" level="project" />
     <orderEntry type="library" name="Maven: org.mongodb:mongodb-driver-core:3.4.0-beta1" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20160212" level="project" />
-    <orderEntry type="library" name="Maven: org.nmdp:hml-fhir-mongo:1.0.7" level="project" />
+    <orderEntry type="library" name="Maven: org.nmdp:hml-fhir-mongo:1.0.15" level="project" />
   </component>
 </module>
