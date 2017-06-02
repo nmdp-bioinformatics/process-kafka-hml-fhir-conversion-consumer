@@ -47,6 +47,8 @@ import org.nmdp.hmlfhir.deserialization.Deserializer;
 import org.nmdp.hmlfhir.deserialization.HmlDeserializer;
 import org.nmdp.hmlfhirconvertermodels.domain.fhir.FhirMessage;
 import org.nmdp.hmlfhirconvertermodels.dto.Hml;
+import org.nmdp.hmlfhirmongo.models.ConversionStatus;
+import org.nmdp.hmlfhirmongo.mongo.MongoConversionStatusDatabase;
 import org.nmdp.kafkaconsumer.handler.KafkaMessageHandler;
 import org.nmdp.hmlfhirmongo.config.MongoConfiguration;
 import org.nmdp.hmlfhirmongo.mongo.MongoFhirDatabase;
@@ -65,6 +67,9 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
     private static final Yaml yaml = new Yaml();
     private final MongoConfiguration mongoConfiguration;
 
+    private final MongoConversionStatusDatabase mongoConversionStatusDatabase;
+    private final MongoHmlDatabase mongoHmlDatabase;
+    private final MongoFhirDatabase mongoFhirDatabase;
     private final ConvertHmlToFhir CONVERTER;
     private final ConcurrentMap<String, LinkedBlockingQueue<WorkItem>> workQueueMap;
 
@@ -77,6 +82,10 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
         try (InputStream is = url.openStream()) {
             mongoConfiguration = yaml.loadAs(is, MongoConfiguration.class);
         }
+
+        mongoHmlDatabase = new MongoHmlDatabase(mongoConfiguration);
+        mongoFhirDatabase = new MongoFhirDatabase(mongoConfiguration);
+        mongoConversionStatusDatabase = new MongoConversionStatusDatabase(mongoConfiguration);
     }
 
     private String getSenderKey(String topic, int partition) {
@@ -130,6 +139,8 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
             JsonObject kafkaJson = gson.fromJson(kafkaMessage, JsonObject.class);
             JsonObject kafkaPayloadJson = kafkaJson.getAsJsonObject("payload");
             Hml hml = null;
+            org.bson.Document conversionStatus =
+                    getConversionStatus(kafkaPayloadJson.get("modelId").getAsString());
 
             if (kafkaPayloadJson.has("model")) {
                 JsonObject hmlJson = new JsonObject();
@@ -139,20 +150,24 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
                 hml = getHmlFromMongo(kafkaPayloadJson.get("modelId").toString());
             }
 
-            if (hml == null && !kafkaPayloadJson.has("modelId")) {
-                throw new Exception("No message to convert");
-            }
-
-            writeFhirToMongo(CONVERTER.convert(hml));
+            writeFhirToMongo(CONVERTER.convert(hml), conversionStatus);
         } catch (Exception ex) {
             LOG.error("Error converting HML to FHIR.", ex);
         }
     }
 
+    private org.bson.Document getConversionStatus(String conversionId) throws Exception {
+        try {
+            return mongoConversionStatusDatabase.get(conversionId);
+        } catch (Exception ex) {
+            LOG.error("Error retrieving status from mongo", ex);
+            throw ex;
+        }
+    }
+
     private Hml getHmlFromMongo(String hmlId) throws Exception {
         try {
-            MongoHmlDatabase mongo = new MongoHmlDatabase(mongoConfiguration);
-            org.bson.Document document = mongo.get(hmlId);
+            org.bson.Document document = mongoHmlDatabase.get(hmlId);
             String json = document.toJson();
             return CONVERTER.convertToDto(json, null);
         } catch (Exception ex) {
@@ -161,13 +176,21 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
         }
     }
 
-    private void writeFhirToMongo(FhirMessage fhir) throws Exception {
+    private void writeFhirToMongo(FhirMessage fhir, org.bson.Document conversionStatus) throws Exception {
         try {
-            MongoFhirDatabase mongo = new MongoFhirDatabase(mongoConfiguration);
-            mongo.save(fhir);
+            fhir = mongoFhirDatabase.save(fhir);
+            updateConversionStatusCompleted(fhir, conversionStatus.get("_id").toString(), true);
         } catch (Exception ex) {
-            LOG.error("Error writing record to mongo.", ex);
+            LOG.error("Error writing record to mongo", ex);
             throw ex;
+        }
+    }
+
+    private void updateConversionStatusCompleted(FhirMessage fhir, String id, Boolean success) {
+        try {
+            mongoConversionStatusDatabase.update(id, success, fhir.getId());
+        } catch (Exception ex) {
+            LOG.error("Error updating mongo complete", ex);
         }
     }
 
