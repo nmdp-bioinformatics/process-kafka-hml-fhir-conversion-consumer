@@ -34,7 +34,7 @@
     <orderEntry type="library" name="Maven: org.nmdp:service-kafka-producer-model:1.8.2" level="project" />
     <orderEntry type="library" name="Maven: org.nmdp:service-hml-fhir-converter-models:1.18.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.0" level="project" />
-    <orderEntry type="library" name="Maven: org.nmdp:hml-fhir:1.3.28" level="project" />
+    <orderEntry type="library" name="Maven: org.nmdp:hml-fhir:1.3.30" level="project" />
     <orderEntry type="library" name="Maven: org.modelmapper:modelmapper:0.7.5" level="project" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.9" level="project" />
     <orderEntry type="library" name="Maven: org.mongodb:mongodb-driver:3.4.0-beta1" level="project" />
