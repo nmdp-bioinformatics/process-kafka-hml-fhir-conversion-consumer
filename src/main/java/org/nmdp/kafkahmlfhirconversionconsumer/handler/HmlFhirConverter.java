@@ -45,7 +45,7 @@ import org.nmdp.hmlfhir.ConvertHmlToFhirImpl;
 import org.nmdp.hmlfhir.deserialization.Deserializer;
 import org.nmdp.hmlfhir.deserialization.HmlDeserializer;
 import org.nmdp.hmlfhirconvertermodels.domain.fhir.FhirMessage;
-import org.nmdp.hmlfhirconvertermodels.dto.Hml;
+import org.nmdp.hmlfhirconvertermodels.dto.hml.Hml;
 import org.nmdp.hmlfhirmongo.mongo.MongoConversionStatusDatabase;
 import org.nmdp.kafkaconsumer.handler.KafkaMessageHandler;
 import org.nmdp.hmlfhirmongo.config.MongoConfiguration;
