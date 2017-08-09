@@ -52,6 +52,8 @@ import org.nmdp.hmlfhirmongo.config.MongoConfiguration;
 import org.nmdp.hmlfhirmongo.mongo.MongoFhirDatabase;
 import org.nmdp.hmlfhirmongo.mongo.MongoHmlDatabase;
 
+import org.nmdp.kafkahmlfhirconversionconsumer.config.UrlConfiguration;
+import org.nmdp.kafkahmlfhirconversionconsumer.http.FhirSubmission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -63,13 +65,14 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
     private static final ThreadLocal<DecimalFormat> DF = ThreadLocal.withInitial(() -> new DecimalFormat("####################"));
     private static final ThreadLocal<GsonBuilder> OBJECT_MAPPER = ThreadLocal.withInitial(GsonBuilder::new);
     private static final Yaml yaml = new Yaml();
-    private final MongoConfiguration mongoConfiguration;
 
+    private final MongoConfiguration mongoConfiguration;
     private final MongoConversionStatusDatabase mongoConversionStatusDatabase;
     private final MongoHmlDatabase mongoHmlDatabase;
     private final MongoFhirDatabase mongoFhirDatabase;
     private final ConvertHmlToFhir CONVERTER;
     private final ConcurrentMap<String, LinkedBlockingQueue<WorkItem>> workQueueMap;
+    private final FhirSubmission fhirSubmission;
 
     public HmlFhirConverter() throws IOException {
         Deserializer deserializer = new HmlDeserializer();
@@ -84,6 +87,7 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
         mongoHmlDatabase = new MongoHmlDatabase(mongoConfiguration);
         mongoFhirDatabase = new MongoFhirDatabase(mongoConfiguration);
         mongoConversionStatusDatabase = new MongoConversionStatusDatabase(mongoConfiguration);
+        fhirSubmission = new FhirSubmission();
     }
 
     private String getSenderKey(String topic, int partition) {
@@ -137,8 +141,8 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
             JsonObject kafkaJson = gson.fromJson(kafkaMessage, JsonObject.class);
             JsonObject kafkaPayloadJson = kafkaJson.getAsJsonObject("payload");
             Hml hml = null;
-            org.bson.Document conversionStatus =
-                    getConversionStatus(kafkaPayloadJson.get("modelId").getAsString());
+            String conversionStatusId = kafkaPayloadJson.get("modelId").getAsString();
+            org.bson.Document conversionStatus = getConversionStatus(conversionStatusId);
 
             if (kafkaPayloadJson.has("model")) {
                 JsonObject hmlJson = new JsonObject();
@@ -149,6 +153,7 @@ public class HmlFhirConverter implements KafkaMessageHandler, Closeable {
             }
 
             writeFhirToMongo(CONVERTER.convert(hml), conversionStatus);
+            fhirSubmission.postSubmission(conversionStatusId);
         } catch (Exception ex) {
             LOG.error("Error converting HML to FHIR.", ex);
         }
