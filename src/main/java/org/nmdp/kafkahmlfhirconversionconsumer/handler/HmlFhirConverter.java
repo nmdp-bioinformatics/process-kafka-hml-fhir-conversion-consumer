@@ -52,7 +52,6 @@ import org.nmdp.hmlfhirmongo.config.MongoConfiguration;
 import org.nmdp.hmlfhirmongo.mongo.MongoFhirDatabase;
 import org.nmdp.hmlfhirmongo.mongo.MongoHmlDatabase;
 
-import org.nmdp.kafkahmlfhirconversionconsumer.config.UrlConfiguration;
 import org.nmdp.kafkahmlfhirconversionconsumer.http.FhirSubmission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
